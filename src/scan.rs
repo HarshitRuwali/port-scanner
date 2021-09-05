@@ -1,5 +1,6 @@
-use std::net::IpAddr;
+use std::net::{IpAddr, TcpStream};
 use std::str::FromStr;
+const MAX: u16 = 65535;
 
 pub struct Arguments {
     pub flag: String,
@@ -38,5 +39,24 @@ impl Arguments{
                 return Err("invalid synatx");
             }
         } 
+    }
+}
+
+
+pub fn scan(start_port: u16, ip: IpAddr, threads: u16){
+
+    let mut port:u16 = start_port + 1;
+
+    loop{
+        match TcpStream::connect((ip, port)){
+            Ok(_) => {
+                println!("{}", port);
+            }
+            Err(_) => {}
+        }
+        if(MAX - port) <= threads{
+            break;
+        }
+        port += threads;
     }
 }
