@@ -1,5 +1,8 @@
 use std::net::{IpAddr, TcpStream};
 use std::str::FromStr;
+use std::sync::mpsc::Sender;
+use std::io::{self, Write};
+
 const MAX: u16 = 65535;
 
 pub struct Arguments {
@@ -43,14 +46,16 @@ impl Arguments{
 }
 
 
-pub fn scan(start_port: u16, ip: IpAddr, threads: u16){
+pub fn scan(tx: Sender<u16>, start_port: u16, ip: IpAddr, threads: u16){
 
     let mut port:u16 = start_port + 1;
 
     loop{
         match TcpStream::connect((ip, port)){
             Ok(_) => {
-                println!("{}", port);
+                println!("Found Open port : {}", port);
+                io::stdout().flush().unwrap();
+                tx.send(port).unwrap();
             }
             Err(_) => {}
         }
