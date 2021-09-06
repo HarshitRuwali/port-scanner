@@ -23,6 +23,7 @@ fn main(){
 
     let threads = arguments.threads;
     let ip = arguments.ip;
+    let total_ports = arguments.total_ports;
 
     // Create a simple streaming channel
     let (tx, rx) = channel();
@@ -30,7 +31,7 @@ fn main(){
     for i in 0..threads{
         let tx = tx.clone();
         thread::spawn(move || {
-            scan::scan(tx, i, ip, threads);
+            scan::scan(tx, i, ip, threads, total_ports);
         });
     }
 
@@ -43,9 +44,9 @@ fn main(){
 
     open_port.sort();
     
-    println!("Final List of open Ports: ");
+    println!("\n Final List of open Ports: ");
     for port in open_port{
-        println!("{} is OPEN!", port);
+        println!("Port {} is OPEN!", port);
     }
 
 }

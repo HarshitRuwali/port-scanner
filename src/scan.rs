@@ -3,12 +3,13 @@ use std::str::FromStr;
 use std::sync::mpsc::Sender;
 use std::io::{self, Write};
 
-const MAX: u16 = 65535;
+// const MAX: u16 = 65535;
 
 pub struct Arguments {
     pub flag: String,
     pub ip: IpAddr,
-    pub threads: u16
+    pub threads: u16,
+    pub total_ports: u16
 }
 
 impl Arguments{
@@ -17,12 +18,19 @@ impl Arguments{
         let f = args[1].clone();
         if let Ok(ip) = IpAddr::from_str(&f){
             // when only ip is passed, scan with 4 threads
-            return Ok(Arguments {flag: String::from(""), ip, threads: 4});
+            return Ok(Arguments {flag: String::from(""), ip, threads: 4, total_ports:1000});
         }else{
             let flag = args[1].clone();
             if flag.contains("-h") || flag.contains("--help") && args.len() == 2 {
                 // help function
-                println!("Usage: ");
+                println!("
+                    Port Scanner Made using Rust \n
+                    Usage: port-scanner [-h] [-t thread_count] [ip] \n
+                    where: \n
+                        -h  show this help text \n
+                        -t  set the thread count \n
+                        -p- to scan all open ports \n
+                ");
                 return Err("help");
             }else if flag.contains("-h") || flag.contains("--help"){
                 // if help function is passed along with other arguments
@@ -37,7 +45,17 @@ impl Arguments{
                     Ok(s) => s,
                     Err(_) => return Err("failed due to thread count")
                 };
-                return Ok(Arguments{threads, flag, ip});
+                return Ok(Arguments{threads, flag, ip, total_ports:1000});
+            }else if flag.contains("-p-") {
+                let ip = match IpAddr::from_str(&args[3]){
+                    Ok(s) => s,
+                    Err(_) => return Err("not a valid IP address")
+                };
+                let threads = match args[2].parse::<u16>(){
+                    Ok(s) => s,
+                    Err(_) => return Err("failed due to thread count")
+                };
+                return Ok(Arguments{threads, flag, ip, total_ports: 65535});
             }else{
                 return Err("invalid synatx");
             }
@@ -46,7 +64,7 @@ impl Arguments{
 }
 
 
-pub fn scan(tx: Sender<u16>, start_port: u16, ip: IpAddr, threads: u16){
+pub fn scan(tx: Sender<u16>, start_port: u16, ip: IpAddr, threads: u16, total_ports: u16){
 
     let mut port:u16 = start_port + 1;
 
@@ -59,7 +77,7 @@ pub fn scan(tx: Sender<u16>, start_port: u16, ip: IpAddr, threads: u16){
             }
             Err(_) => {}
         }
-        if(MAX - port) <= threads{
+        if(total_ports - port) <= threads{
             break;
         }
         port += threads;
