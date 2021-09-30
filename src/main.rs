@@ -24,9 +24,18 @@ fn main(){
     let threads = arguments.threads;
     let ip = arguments.ip;
     let total_ports = arguments.total_ports;
+    let port_to_scan = arguments.port_to_scan;
 
     // Create a simple streaming channel
     let (tx, rx) = channel();
+
+    if total_ports == 1{
+        let tx = tx.clone();
+        scan::scan_single(tx, ip, port_to_scan);
+
+        println!("The port {} is not open", port_to_scan);
+        process::exit(0);
+    }
 
     for i in 0..threads{
         let tx = tx.clone();

@@ -9,7 +9,8 @@ pub struct Arguments {
     pub flag: String,
     pub ip: IpAddr,
     pub threads: u16,
-    pub total_ports: u16
+    pub total_ports: u16,
+    pub port_to_scan: u16
 }
 
 impl Arguments{
@@ -18,7 +19,7 @@ impl Arguments{
         let f = args[1].clone();
         if let Ok(ip) = IpAddr::from_str(&f){
             // when only ip is passed, scan with 4 threads
-            return Ok(Arguments {flag: String::from(""), ip, threads: 4, total_ports:1000});
+            return Ok(Arguments {flag: String::from(""), ip, threads: 4, total_ports:1000, port_to_scan: 0});
         }else{
             let flag = args[1].clone();
             if flag.contains("-h") || flag.contains("--help") && args.len() == 2 {
@@ -45,7 +46,7 @@ impl Arguments{
                     Ok(s) => s,
                     Err(_) => return Err("failed due to thread count")
                 };
-                return Ok(Arguments{threads, flag, ip, total_ports:1000});
+                return Ok(Arguments{threads, flag, ip, total_ports:1000, port_to_scan: 0});
             }else if flag.contains("-p-") {
                 let ip = match IpAddr::from_str(&args[3]){
                     Ok(s) => s,
@@ -55,7 +56,23 @@ impl Arguments{
                     Ok(s) => s,
                     Err(_) => return Err("failed due to thread count")
                 };
-                return Ok(Arguments{threads, flag, ip, total_ports: 65535});
+                return Ok(Arguments{threads, flag, ip, total_ports: 65535, port_to_scan: 0});
+            }else if flag.contains("-p") {
+                let ip = match IpAddr::from_str(&args[3]){
+                    Ok(s) => s,
+                    Err(_) => return Err("not a valid IP address")
+                };
+                // let threads = match args[2].parse::<u16>(){
+                //     Ok(s) => s,
+                //     Err(_) => return Err("failed due to the thread count")
+                // };
+
+                let port_to_scan = match args[2].parse::<u16>(){
+                    Ok(s) => s,
+                    Err(_) => return Err("failed due to the port")
+                };
+
+                return Ok(Arguments{threads:1, flag, ip, total_ports: 1, port_to_scan})
             }else{
                 return Err("invalid synatx");
             }
@@ -81,5 +98,17 @@ pub fn scan(tx: Sender<u16>, start_port: u16, ip: IpAddr, threads: u16, total_po
             break;
         }
         port += threads;
+    }
+}
+
+
+pub fn scan_single(tx: Sender<u16>, ip: IpAddr, port_to_scan: u16){
+    match TcpStream::connect((ip, port_to_scan)){
+        Ok(_) => {
+            println!("The port {} is open", port_to_scan);
+            io::stdout().flush().unwrap();
+            tx.send(port_to_scan).unwrap();
+        }
+        Err(_) => {}
     }
 }
