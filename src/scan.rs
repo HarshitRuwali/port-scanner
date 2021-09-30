@@ -109,6 +109,8 @@ pub fn scan_single(tx: Sender<u16>, ip: IpAddr, port_to_scan: u16){
             io::stdout().flush().unwrap();
             tx.send(port_to_scan).unwrap();
         }
-        Err(_) => {}
+        Err(_) => {
+            println!("The port {} is not open", port_to_scan);
+        }
     }
 }

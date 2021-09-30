@@ -32,8 +32,6 @@ fn main(){
     if total_ports == 1{
         let tx = tx.clone();
         scan::scan_single(tx, ip, port_to_scan);
-
-        println!("The port {} is not open", port_to_scan);
         process::exit(0);
     }
 
